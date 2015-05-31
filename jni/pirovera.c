@@ -54,8 +54,6 @@ static pthread_t gst_app_thread;
 static pthread_key_t current_jni_env;
 static JavaVM *java_vm;
 static jfieldID custom_data_field_id;
-static jmethodID set_message_method_id;
-static jmethodID set_current_position_method_id;
 static jmethodID on_gstreamer_initialized_method_id;
 static jmethodID on_media_size_changed_method_id;
 
@@ -97,57 +95,6 @@ static JNIEnv *get_jni_env (void) {
   }
 
   return env;
-}
-
-/* Change the content of the UI's TextView */
-static void set_ui_message (const gchar *message, CustomData *data) {
-  JNIEnv *env = get_jni_env ();
-  GST_DEBUG ("Setting message to: %s", message);
-  jstring jmessage = (*env)->NewStringUTF(env, message);
-  (*env)->CallVoidMethod (env, data->app, set_message_method_id, jmessage);
-  if ((*env)->ExceptionCheck (env)) {
-    GST_ERROR ("Failed to call Java method");
-    (*env)->ExceptionClear (env);
-  }
-  (*env)->DeleteLocalRef (env, jmessage);
-}
-
-/* Tell the application what is the current position and clip duration */
-static void set_current_ui_position (gint position, gint duration, CustomData *data) {
-  JNIEnv *env = get_jni_env ();
-  (*env)->CallVoidMethod (env, data->app, set_current_position_method_id, position, duration);
-  if ((*env)->ExceptionCheck (env)) {
-    GST_ERROR ("Failed to call Java method");
-    (*env)->ExceptionClear (env);
-  }
-}
-
-/* If we have pipeline and it is running, query the current position and clip duration and inform
- * the application */
-static gboolean refresh_ui (CustomData *data) {
-  gint64 current = -1;
-  gint64 position;
-
-  /* We do not want to update anything unless we have a working pipeline in the PAUSED or PLAYING state */
-  if (!data || !data->pipeline || data->state < GST_STATE_PAUSED)
-    return TRUE;
-
-  /* If we didn't know it yet, query the stream duration */
-  if (!GST_CLOCK_TIME_IS_VALID (data->duration)) {
-    if (!gst_element_query_duration (data->pipeline, GST_FORMAT_TIME, &data->duration)) {
-      GST_WARNING ("Could not query current duration (normal for still pictures)");
-      data->duration = 0;
-    }
-  }
-
-  if (!gst_element_query_position (data->pipeline, GST_FORMAT_TIME, &position)) {
-    GST_WARNING ("Could not query current position (normal for still pictures)");
-    position = 0;
-  }
-
-  /* Java expects these values in milliseconds, and GStreamer provides nanoseconds */
-  set_current_ui_position (position / GST_MSECOND, data->duration / GST_MSECOND, data);
-  return TRUE;
 }
 
 /* Forward declaration for the delayed seek callback */
@@ -197,17 +144,6 @@ static gboolean delayed_seek_cb (CustomData *data) {
 
 /* Retrieve errors from the bus and show them on the UI */
 static void error_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
-  GError *err;
-  gchar *debug_info;
-  gchar *message_string;
-
-  gst_message_parse_error (msg, &err, &debug_info);
-  message_string = g_strdup_printf ("Error received from element %s: %s", GST_OBJECT_NAME (msg->src), err->message);
-  g_clear_error (&err);
-  g_free (debug_info);
-  set_ui_message (message_string, data);
-  g_free (message_string);
-  data->target_state = GST_STATE_NULL;
   gst_element_set_state (data->pipeline, GST_STATE_NULL);
 }
 
@@ -233,14 +169,9 @@ static void buffering_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
 
   gst_message_parse_buffering (msg, &percent);
   if (percent < 100 && data->target_state >= GST_STATE_PAUSED) {
-    gchar * message_string = g_strdup_printf ("Buffering %d%%", percent);
     gst_element_set_state (data->pipeline, GST_STATE_PAUSED);
-    set_ui_message (message_string, data);
-    g_free (message_string);
   } else if (data->target_state >= GST_STATE_PLAYING) {
     gst_element_set_state (data->pipeline, GST_STATE_PLAYING);
-  } else if (data->target_state >= GST_STATE_PAUSED) {
-    set_ui_message ("Buffering complete", data);
   }
 }
 
@@ -288,9 +219,6 @@ static void state_changed_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
   /* Only pay attention to messages coming from the pipeline, not its children */
   if (GST_MESSAGE_SRC (msg) == GST_OBJECT (data->pipeline)) {
     data->state = new_state;
-    gchar *message = g_strdup_printf("State changed to %s", gst_element_state_get_name(new_state));
-    set_ui_message(message, data);
-    g_free (message);
 
     if (new_state == GST_STATE_NULL || new_state == GST_STATE_READY)
       data->is_live = FALSE;
@@ -326,6 +254,11 @@ static void check_initialization_complete (CustomData *data) {
   }
 }
 
+static void source_setup (GstElement *pipeline, GstElement *source, CustomData *data) {
+  g_print ("Source has been created. Configuring.\n");
+  g_object_set (source, "latency", 50, NULL);
+}
+
 /* Main method for the native code. This is executed on its own thread. */
 static void *app_function (void *userdata) {
   JavaVMAttachArgs args;
@@ -345,10 +278,7 @@ static void *app_function (void *userdata) {
   /* Build pipeline */
   data->pipeline = gst_parse_launch("playbin", &error);
   if (error) {
-    gchar *message = g_strdup_printf("Unable to build pipeline: %s", error->message);
     g_clear_error (&error);
-    set_ui_message(message, data);
-    g_free (message);
     return NULL;
   }
 
@@ -360,6 +290,9 @@ static void *app_function (void *userdata) {
   /* Set the pipeline to READY, so it can already accept a window handle, if we have one */
   data->target_state = GST_STATE_READY;
   gst_element_set_state(data->pipeline, GST_STATE_READY);
+
+  /* Source setup callback so we can adjust latency. */
+  g_signal_connect (data->pipeline, "source-setup", G_CALLBACK (source_setup), data);
 
   /* Instruct the bus to emit signals for each received message, and connect to the interesting signals */
   bus = gst_element_get_bus (data->pipeline);
@@ -374,12 +307,6 @@ static void *app_function (void *userdata) {
   g_signal_connect (G_OBJECT (bus), "message::buffering", (GCallback)buffering_cb, data);
   g_signal_connect (G_OBJECT (bus), "message::clock-lost", (GCallback)clock_lost_cb, data);
   gst_object_unref (bus);
-
-  /* Register a function that GLib will call 4 times per second */
-  timeout_source = g_timeout_source_new (250);
-  g_source_set_callback (timeout_source, (GSourceFunc)refresh_ui, data, NULL);
-  g_source_attach (timeout_source, data->context);
-  g_source_unref (timeout_source);
 
   /* Create a GLib Main Loop and set it to run */
   GST_DEBUG ("Entering main loop... (CustomData:%p)", data);
@@ -482,17 +409,14 @@ void gst_native_set_position (JNIEnv* env, jobject thiz, int milliseconds) {
 /* Static class initializer: retrieve method and field IDs */
 static jboolean gst_native_class_init (JNIEnv* env, jclass klass) {
   custom_data_field_id = (*env)->GetFieldID (env, klass, "native_custom_data", "J");
-  set_message_method_id = (*env)->GetMethodID (env, klass, "setMessage", "(Ljava/lang/String;)V");
-  set_current_position_method_id = (*env)->GetMethodID (env, klass, "setCurrentPosition", "(II)V");
   on_gstreamer_initialized_method_id = (*env)->GetMethodID (env, klass, "onGStreamerInitialized", "()V");
   on_media_size_changed_method_id = (*env)->GetMethodID (env, klass, "onMediaSizeChanged", "(II)V");
 
-  if (!custom_data_field_id || !set_message_method_id || !on_gstreamer_initialized_method_id ||
-      !on_media_size_changed_method_id || !set_current_position_method_id) {
+  if (!on_gstreamer_initialized_method_id || !on_media_size_changed_method_id) {
     /* We emit this message through the Android log instead of the GStreamer log because the later
      * has not been initialized yet.
      */
-    __android_log_print (ANDROID_LOG_ERROR, "tutorial-4", "The calling class does not implement all necessary interface methods");
+    __android_log_print (ANDROID_LOG_ERROR, "tutorial-5", "The calling class does not implement all necessary interface methods");
     return JNI_FALSE;
   }
   return JNI_TRUE;
@@ -561,7 +485,7 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     __android_log_print (ANDROID_LOG_ERROR, "tutorial-5", "Could not retrieve JNIEnv");
     return 0;
   }
-  jclass klass = (*env)->FindClass (env, "com/gst_sdk_tutorials/tutorial_5/Tutorial5");
+  jclass klass = (*env)->FindClass (env, "com/robotfuzz/al/pirovera/MainActivity");
   (*env)->RegisterNatives (env, klass, native_methods, G_N_ELEMENTS(native_methods));
 
   pthread_key_create (&current_jni_env, detach_current_thread);
