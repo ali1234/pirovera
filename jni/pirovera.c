@@ -9,6 +9,8 @@
 #include <gst/video/videooverlay.h>
 #include <pthread.h>
 
+#include "net.h"
+
 GST_DEBUG_CATEGORY_STATIC (debug_category);
 #define GST_CAT_DEFAULT debug_category
 
@@ -342,6 +344,7 @@ static void gst_native_init (JNIEnv* env, jobject thiz) {
   GST_DEBUG ("Created CustomData at %p", data);
   data->app = (*env)->NewGlobalRef (env, thiz);
   GST_DEBUG ("Created GlobalRef for app object at %p", data->app);
+  net_start();
   pthread_create (&gst_app_thread, NULL, &app_function, data);
 }
 
@@ -349,6 +352,7 @@ static void gst_native_init (JNIEnv* env, jobject thiz) {
 static void gst_native_finalize (JNIEnv* env, jobject thiz) {
   CustomData *data = GET_CUSTOM_DATA (env, thiz, custom_data_field_id);
   if (!data) return;
+  net_stop();
   GST_DEBUG ("Quitting main loop...");
   g_main_loop_quit (data->main_loop);
   GST_DEBUG ("Waiting for thread to finish...");
