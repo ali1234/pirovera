@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center_vertical"
@@ -7,8 +7,37 @@
 
     <com.robotfuzz.al.pirovera.GStreamerSurfaceView
         android:id="@+id/surface_video"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="center_vertical|center_horizontal" />
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
 
-</LinearLayout>
+    <ToggleButton
+        android:id="@+id/headlights"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:layout_alignParentRight="true"
+        android:layout_above="@+id/taillights"
+        android:color="#66ffffff"
+        />
+
+   <ToggleButton
+        android:id="@+id/taillights"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:layout_alignParentRight="true"
+        android:layout_above="@+id/hazardlights"
+        android:color="#66ff0000"
+        />
+
+   <ToggleButton
+        android:id="@+id/hazardlights"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:color="#66ffff00"
+        />
+        
+
+</RelativeLayout>
