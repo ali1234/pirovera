@@ -22,11 +22,9 @@
 
 #include "control.h"
 
-signed short motors[4] {0,0,0,0};
+signed short motors[4] = {0,0,0,0};
 unsigned short lights = 0;
 unsigned short flags = 0;
-
-SDL_GameController *gc;
 
 static GMutex control_mutex;
 
@@ -100,7 +98,7 @@ void control_set_left(signed short f)
 {
     g_mutex_lock (&control_mutex);
 
-    motors[1] = motors[3] = db;
+    motors[1] = motors[3] = 0;
 
     g_mutex_unlock (&control_mutex);
 }
@@ -109,7 +107,7 @@ void control_set_right(signed short f)
 {
     g_mutex_lock (&control_mutex);
 
-    motors[0] = motors[2] = da;
+    motors[0] = motors[2] = 0;
 
     g_mutex_unlock (&control_mutex);
 }
