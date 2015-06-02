@@ -18,7 +18,7 @@
         android:layout_height="96dp"
         android:layout_alignParentRight="true"
         android:layout_above="@+id/taillights"
-        android:color="#66ffffff"
+        android:alpha="0.25"
         />
 
    <ToggleButton
@@ -27,7 +27,7 @@
         android:layout_height="96dp"
         android:layout_alignParentRight="true"
         android:layout_above="@+id/hazardlights"
-        android:color="#66ff0000"
+        android:alpha="0.25"
         />
 
    <ToggleButton
@@ -36,8 +36,16 @@
         android:layout_height="96dp"
         android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
-        android:color="#66ffff00"
+        android:alpha="0.25"
         />
+
+    <com.MobileAnarchy.Android.Widgets.Joystick.JoystickView
+        android:id="@+id/joystick"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_width="175dip"
+        android:layout_height="175dip"
+        android:alpha="0.25" />
         
 
 </RelativeLayout>
