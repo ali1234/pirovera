@@ -10,6 +10,7 @@
 #include <pthread.h>
 
 #include "net.h"
+#include "control.h"
 
 GST_DEBUG_CATEGORY_STATIC (debug_category);
 #define GST_CAT_DEFAULT debug_category
@@ -222,6 +223,8 @@ static void *app_function (void *userdata) {
   data->context = g_main_context_new ();
   g_main_context_push_thread_default(data->context);
 
+  net_start(data->context);
+
   /* Build pipeline */
   data->pipeline = gst_parse_launch("playbin", &error);
   if (error) {
@@ -264,6 +267,7 @@ static void *app_function (void *userdata) {
   data->main_loop = NULL;
 
   /* Free resources */
+  net_stop();
   g_main_context_pop_thread_default(data->context);
   g_main_context_unref (data->context);
   data->target_state = GST_STATE_NULL;
@@ -286,7 +290,6 @@ static void gst_native_init (JNIEnv* env, jobject thiz) {
   GST_DEBUG ("Created CustomData at %p", data);
   data->app = (*env)->NewGlobalRef (env, thiz);
   GST_DEBUG ("Created GlobalRef for app object at %p", data->app);
-  net_start();
   pthread_create (&gst_app_thread, NULL, &app_function, data);
 }
 
@@ -294,7 +297,6 @@ static void gst_native_init (JNIEnv* env, jobject thiz) {
 static void gst_native_finalize (JNIEnv* env, jobject thiz) {
   CustomData *data = GET_CUSTOM_DATA (env, thiz, custom_data_field_id);
   if (!data) return;
-  net_stop();
   GST_DEBUG ("Quitting main loop...");
   g_main_loop_quit (data->main_loop);
   GST_DEBUG ("Waiting for thread to finish...");
@@ -396,22 +398,27 @@ static void gst_native_surface_finalize (JNIEnv *env, jobject thiz) {
 
 static void gst_native_set_left (JNIEnv *env, jobject thiz, int n) {
   unsigned short tmp = 0;
+  n = -n;
   if (n < 0) {
     tmp = 0x8000;
     n = -n;
   }
-  tmp |= n;
+  tmp |= (n*3000);
   control_set_left(tmp);
+  __android_log_print(ANDROID_LOG_VERBOSE, "PiRover", "Left: %d", tmp);
 }
 
 static void gst_native_set_right (JNIEnv *env, jobject thiz, int n) {
   unsigned short tmp = 0;
+  n = -n;
   if (n < 0) {
     tmp = 0x8000;
     n = -n;
   }
-  tmp |= n;
+  tmp |= (n*3000);
   control_set_right(tmp);
+  __android_log_print(ANDROID_LOG_VERBOSE, "PiRover", "Right: %d", tmp);
+
 }
 
 /* List of implemented native methods */

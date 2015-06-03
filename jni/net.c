@@ -19,12 +19,14 @@
 #include <glib.h>
 #include <gio/gio.h>
 
+#include <android/log.h>
+
 #include "net.h"
 #include "control.h"
 
 static GSocket *socket = NULL;
 
-static gboolean send_controls(gpointer unused, gboolean ignored)
+static gboolean send_controls(gpointer unused)
 {
     char buf[12];
     GError *err = NULL;
@@ -32,11 +34,18 @@ static gboolean send_controls(gpointer unused, gboolean ignored)
     if(socket == NULL) return FALSE;
 
     control_get_packet(buf);
+
+    __android_log_print(ANDROID_LOG_VERBOSE, "PiRover",
+            "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
+            buf[0], buf[1], buf[2], buf[3],
+            buf[4], buf[5], buf[6], buf[7],
+            buf[8], buf[9], buf[10], buf[11]);
+
     g_socket_send(socket, buf, 12, NULL, &err);
     return TRUE;
 }
 
-void net_start(void)
+void net_start(GMainContext *context)
 {
     GInetAddress *udpAddress;
     GSocketAddress *udpSocketAddress;
@@ -51,7 +60,13 @@ void net_start(void)
     g_socket_connect(socket, udpSocketAddress, NULL, &err);
     g_assert(err == NULL);
 
-    g_timeout_add(100, (GSourceFunc)send_controls, NULL);
+    __android_log_print(ANDROID_LOG_VERBOSE, "PiRover", "Network code init.");
+
+    GSource *source = g_timeout_source_new(100);
+    g_source_set_callback(source, send_controls, NULL, NULL);
+    g_source_attach(source, context);
+
+    //g_timeout_add(100, send_controls, NULL);
 }
 
 void net_stop(void)
