@@ -33,6 +33,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
     private native void nativeSetUri(String uri); // Set the URI of the media to play
     private native void nativePlay();     // Set pipeline to PLAYING
     private native void nativePause();    // Set pipeline to PAUSED
+    private native void nativeSetLeft(int n);  // Set left motor
+    private native void nativeSetRight(int n); // Set right motor
     private static native boolean nativeClassInit(); // Initialize native class: cache Method IDs for callbacks
     private native void nativeSurfaceInit(Object surface); // A new surface is available
     private native void nativeSurfaceFinalize(); // Surface about to be destroyed
@@ -46,14 +48,17 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
 
         @Override
         public void OnMoved(int pan, int tilt) {
+            nativeSetLeft(tilt);
         }
 
         @Override
         public void OnReleased() {
+            nativeSetLeft(0);
         }
 
         @Override
         public void OnReturnedToCenter() {
+            nativeSetLeft(0);
         }
 
     };
@@ -62,14 +67,17 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
 
         @Override
         public void OnMoved(int pan, int tilt) {
+            nativeSetRight(tilt);
         }
 
         @Override
         public void OnReleased() {
+            nativeSetRight(0);
         }
 
         @Override
         public void OnReturnedToCenter() {
+            nativeSetRight(0);
         }
 
     };

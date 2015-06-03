@@ -98,7 +98,7 @@ void control_set_left(signed short f)
 {
     g_mutex_lock (&control_mutex);
 
-    motors[1] = motors[3] = 0;
+    motors[1] = motors[3] = f;
 
     g_mutex_unlock (&control_mutex);
 }
@@ -107,7 +107,7 @@ void control_set_right(signed short f)
 {
     g_mutex_lock (&control_mutex);
 
-    motors[0] = motors[2] = 0;
+    motors[0] = motors[2] = f;
 
     g_mutex_unlock (&control_mutex);
 }

@@ -394,6 +394,26 @@ static void gst_native_surface_finalize (JNIEnv *env, jobject thiz) {
   data->initialized = FALSE;
 }
 
+static void gst_native_set_left (JNIEnv *env, jobject thiz, int n) {
+  unsigned short tmp = 0;
+  if (n < 0) {
+    tmp = 0x8000;
+    n = -n;
+  }
+  tmp |= n;
+  control_set_left(tmp);
+}
+
+static void gst_native_set_right (JNIEnv *env, jobject thiz, int n) {
+  unsigned short tmp = 0;
+  if (n < 0) {
+    tmp = 0x8000;
+    n = -n;
+  }
+  tmp |= n;
+  control_set_right(tmp);
+}
+
 /* List of implemented native methods */
 static JNINativeMethod native_methods[] = {
   { "nativeInit", "()V", (void *) gst_native_init},
@@ -403,6 +423,8 @@ static JNINativeMethod native_methods[] = {
   { "nativePause", "()V", (void *) gst_native_pause},
   { "nativeSurfaceInit", "(Ljava/lang/Object;)V", (void *) gst_native_surface_init},
   { "nativeSurfaceFinalize", "()V", (void *) gst_native_surface_finalize},
+  { "nativeSetLeft", "(I)V", (void *) gst_native_set_left},
+  { "nativeSetRight", "(I)V", (void *) gst_native_set_right},
   { "nativeClassInit", "()Z", (void *) gst_native_class_init}
 };
 
