@@ -40,8 +40,6 @@ typedef struct _CustomData {
   ANativeWindow *native_window; /* The Android native window where video will be rendered */
   GstState state;               /* Current pipeline state */
   GstState target_state;        /* Desired pipeline state, to be set once buffering is complete */
-  gint64 desired_position;      /* Position to seek to, once the pipeline is running */
-  GstClockTime last_seek_time;  /* For seeking overflow prevention (throttling) */
   gboolean is_live;             /* Live streams do not use buffering */
 } CustomData;
 
@@ -282,8 +280,6 @@ static void *app_function (void *userdata) {
 /* Instruct the native code to create its internal data structure, pipeline and thread */
 static void gst_native_init (JNIEnv* env, jobject thiz) {
   CustomData *data = g_new0 (CustomData, 1);
-  data->desired_position = GST_CLOCK_TIME_NONE;
-  data->last_seek_time = GST_CLOCK_TIME_NONE;
   SET_CUSTOM_DATA (env, thiz, custom_data_field_id, data);
   GST_DEBUG_CATEGORY_INIT (debug_category, "tutorial-5", 0, "Android tutorial 5");
   gst_debug_set_threshold_for_name("tutorial-5", GST_LEVEL_DEBUG);
