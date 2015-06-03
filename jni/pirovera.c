@@ -102,48 +102,6 @@ static JNIEnv *get_jni_env (void) {
 /* Forward declaration for the delayed seek callback */
 static gboolean delayed_seek_cb (CustomData *data);
 
-/* Perform seek, if we are not too close to the previous seek. Otherwise, schedule the seek for
- * some time in the future. */
-static void execute_seek (gint64 desired_position, CustomData *data) {
-  gint64 diff;
-
-  if (desired_position == GST_CLOCK_TIME_NONE)
-    return;
-
-  diff = gst_util_get_timestamp () - data->last_seek_time;
-
-  if (GST_CLOCK_TIME_IS_VALID (data->last_seek_time) && diff < SEEK_MIN_DELAY) {
-    /* The previous seek was too close, delay this one */
-    GSource *timeout_source;
-
-    if (data->desired_position == GST_CLOCK_TIME_NONE) {
-      /* There was no previous seek scheduled. Setup a timer for some time in the future */
-      timeout_source = g_timeout_source_new ((SEEK_MIN_DELAY - diff) / GST_MSECOND);
-      g_source_set_callback (timeout_source, (GSourceFunc)delayed_seek_cb, data, NULL);
-      g_source_attach (timeout_source, data->context);
-      g_source_unref (timeout_source);
-    }
-    /* Update the desired seek position. If multiple petitions are received before it is time
-     * to perform a seek, only the last one is remembered. */
-    data->desired_position = desired_position;
-    GST_DEBUG ("Throttling seek to %" GST_TIME_FORMAT ", will be in %" GST_TIME_FORMAT,
-        GST_TIME_ARGS (desired_position), GST_TIME_ARGS (SEEK_MIN_DELAY - diff));
-  } else {
-    /* Perform the seek now */
-    GST_DEBUG ("Seeking to %" GST_TIME_FORMAT, GST_TIME_ARGS (desired_position));
-    data->last_seek_time = gst_util_get_timestamp ();
-    gst_element_seek_simple (data->pipeline, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_KEY_UNIT, desired_position);
-    data->desired_position = GST_CLOCK_TIME_NONE;
-  }
-}
-
-/* Delayed seek callback. This gets called by the timer setup in the above function. */
-static gboolean delayed_seek_cb (CustomData *data) {
-  GST_DEBUG ("Doing delayed seek to %" GST_TIME_FORMAT, GST_TIME_ARGS (data->desired_position));
-  execute_seek (data->desired_position, data);
-  return FALSE;
-}
-
 /* Retrieve errors from the bus and show them on the UI */
 static void error_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
   gst_element_set_state (data->pipeline, GST_STATE_NULL);
@@ -153,7 +111,6 @@ static void error_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
 static void eos_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
   data->target_state = GST_STATE_PAUSED;
   data->is_live |= (gst_element_set_state (data->pipeline, GST_STATE_PAUSED) == GST_STATE_CHANGE_NO_PREROLL);
-  execute_seek (0, data);
 }
 
 /* Called when the duration of the media changes. Just mark it as unknown, so we re-query it in the next UI refresh. */
@@ -229,10 +186,6 @@ static void state_changed_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
     if (old_state == GST_STATE_READY && new_state == GST_STATE_PAUSED) {
       /* By now the sink already knows the media size */
       check_media_size(data);
-
-      /* If there was a scheduled seek, perform it now that we have moved to the Paused state */
-      if (GST_CLOCK_TIME_IS_VALID (data->desired_position))
-        execute_seek (data->desired_position, data);
     }
   }
 }
