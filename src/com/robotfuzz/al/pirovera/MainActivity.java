@@ -24,6 +24,9 @@ import android.widget.Toast;
 
 import org.freedesktop.gstreamer.GStreamer;
 
+import com.MobileAnarchy.Android.Widgets.Joystick.JoystickView;
+import com.MobileAnarchy.Android.Widgets.Joystick.JoystickMovedListener;
+
 public class MainActivity extends Activity implements SurfaceHolder.Callback {
     private native void nativeInit();     // Initialize native code, build pipeline, etc
     private native void nativeFinalize(); // Destroy pipeline and shutdown native code
@@ -36,18 +39,42 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
     private native void nativeSurfaceFinalize(); // Surface about to be destroyed
     private long native_custom_data;      // Native code will use this to keep private data
 
-    private boolean is_playing_desired;   // Whether the user asked to go to PLAYING
-    private int position;                 // Current position, reported by native code
-    private int duration;                 // Current clip duration, reported by native code
-    private boolean is_local_media;       // Whether this clip is stored locally or is being streamed
-    private int desired_position;         // Position where the users wants to seek to
-    private String mediaUri;              // URI of the clip being played
-
-    private final String defaultMediaUri = "rtsp://10.24.42.1:8554/test";
-
-    static private final int PICK_FILE_CODE = 1;
+    private final String mediaUri = "rtsp://10.24.42.1:8554/test";
 
     private PowerManager.WakeLock wake_lock;
+
+    private JoystickMovedListener _listenerLeft = new JoystickMovedListener() {
+
+        @Override
+        public void OnMoved(int pan, int tilt) {
+        }
+
+        @Override
+        public void OnReleased() {
+        }
+
+        @Override
+        public void OnReturnedToCenter() {
+        }
+
+    };
+
+    private JoystickMovedListener _listenerRight = new JoystickMovedListener() {
+
+        @Override
+        public void OnMoved(int pan, int tilt) {
+        }
+
+        @Override
+        public void OnReleased() {
+        }
+
+        @Override
+        public void OnReturnedToCenter() {
+        }
+
+    };
+
 
     // Called when the activity is first created.
     @Override
@@ -60,7 +87,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
             GStreamer.init(this);
         } catch (Exception e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-            finish(); 
+            finish();
             return;
         }
 
@@ -74,18 +101,15 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
         SurfaceHolder sh = sv.getHolder();
         sh.addCallback(this);
 
-        mediaUri = defaultMediaUri;
-        is_local_media = false;
-
-        Log.i ("GStreamer", "  playing:" + is_playing_desired + " position:" + position +
-                " duration: " + duration + " uri: " + mediaUri);
-
         nativeInit();
+
+        JoystickView left  = (JoystickView)findViewById(R.id.joystickleft);
+        JoystickView right = (JoystickView)findViewById(R.id.joystickright);
+         left.setOnJoystickMovedListener(_listenerLeft);
+        right.setOnJoystickMovedListener(_listenerRight);
     }
 
     protected void onSaveInstanceState (Bundle outState) {
-        Log.d ("GStreamer", "Saving state, playing:" + is_playing_desired + " position:" + position +
-                " duration: " + duration + " uri: " + mediaUri);
     }
 
     protected void onDestroy() {
@@ -95,20 +119,13 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
         super.onDestroy();
     }
 
-    // Set the URI to play, and record whether it is a local or remote file
-    private void setMediaUri() {
-        nativeSetUri (mediaUri);
-        is_local_media = mediaUri.startsWith("file://");
-    }
-
     // Called from native code. Native code calls this once it has created its pipeline and
     // the main loop is running, so it is ready to accept commands.
     private void onGStreamerInitialized () {
         Log.i ("GStreamer", "GStreamer initialized:");
-        Log.i ("GStreamer", "  playing:" + is_playing_desired + " position:" + position + " uri: " + mediaUri);
 
         // Restore previous playing state
-        setMediaUri ();
+        nativeSetUri(mediaUri);
         nativePlay();
         wake_lock.acquire();
     }
