@@ -397,19 +397,6 @@ static void gst_native_pause (JNIEnv* env, jobject thiz) {
   data->is_live |= (gst_element_set_state (data->pipeline, GST_STATE_PAUSED) == GST_STATE_CHANGE_NO_PREROLL);
 }
 
-/* Instruct the pipeline to seek to a different position */
-void gst_native_set_position (JNIEnv* env, jobject thiz, int milliseconds) {
-  CustomData *data = GET_CUSTOM_DATA (env, thiz, custom_data_field_id);
-  if (!data) return;
-  gint64 desired_position = (gint64)(milliseconds * GST_MSECOND);
-  if (data->state >= GST_STATE_PAUSED) {
-    execute_seek(desired_position, data);
-  } else {
-    GST_DEBUG ("Scheduling seek to %" GST_TIME_FORMAT " for later", GST_TIME_ARGS (desired_position));
-    data->desired_position = desired_position;
-  }
-}
-
 /* Static class initializer: retrieve method and field IDs */
 static jboolean gst_native_class_init (JNIEnv* env, jclass klass) {
   custom_data_field_id = (*env)->GetFieldID (env, klass, "native_custom_data", "J");
@@ -473,7 +460,6 @@ static JNINativeMethod native_methods[] = {
   { "nativeSetUri", "(Ljava/lang/String;)V", (void *) gst_native_set_uri},
   { "nativePlay", "()V", (void *) gst_native_play},
   { "nativePause", "()V", (void *) gst_native_pause},
-  { "nativeSetPosition", "(I)V", (void*) gst_native_set_position},
   { "nativeSurfaceInit", "(Ljava/lang/Object;)V", (void *) gst_native_surface_init},
   { "nativeSurfaceFinalize", "()V", (void *) gst_native_surface_finalize},
   { "nativeClassInit", "()Z", (void *) gst_native_class_init}

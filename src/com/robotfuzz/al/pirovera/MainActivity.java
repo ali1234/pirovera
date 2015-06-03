@@ -32,7 +32,6 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
     private native void nativeFinalize(); // Destroy pipeline and shutdown native code
     private native void nativeSetUri(String uri); // Set the URI of the media to play
     private native void nativePlay();     // Set pipeline to PLAYING
-    private native void nativeSetPosition(int milliseconds); // Seek to the indicated position, in milliseconds
     private native void nativePause();    // Set pipeline to PAUSED
     private static native boolean nativeClassInit(); // Initialize native class: cache Method IDs for callbacks
     private native void nativeSurfaceInit(Object surface); // A new surface is available
