@@ -40,7 +40,6 @@ typedef struct _CustomData {
   ANativeWindow *native_window; /* The Android native window where video will be rendered */
   GstState state;               /* Current pipeline state */
   GstState target_state;        /* Desired pipeline state, to be set once buffering is complete */
-  gint64 duration;              /* Cached clip duration */
   gint64 desired_position;      /* Position to seek to, once the pipeline is running */
   GstClockTime last_seek_time;  /* For seeking overflow prevention (throttling) */
   gboolean is_live;             /* Live streams do not use buffering */
@@ -111,11 +110,6 @@ static void error_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
 static void eos_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
   data->target_state = GST_STATE_PAUSED;
   data->is_live |= (gst_element_set_state (data->pipeline, GST_STATE_PAUSED) == GST_STATE_CHANGE_NO_PREROLL);
-}
-
-/* Called when the duration of the media changes. Just mark it as unknown, so we re-query it in the next UI refresh. */
-static void duration_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
-  data->duration = GST_CLOCK_TIME_NONE;
 }
 
 /* Called when buffering messages are received. We inform the UI about the current buffering level and
@@ -258,7 +252,6 @@ static void *app_function (void *userdata) {
   g_signal_connect (G_OBJECT (bus), "message::error", (GCallback)error_cb, data);
   g_signal_connect (G_OBJECT (bus), "message::eos", (GCallback)eos_cb, data);
   g_signal_connect (G_OBJECT (bus), "message::state-changed", (GCallback)state_changed_cb, data);
-  g_signal_connect (G_OBJECT (bus), "message::duration", (GCallback)duration_cb, data);
   g_signal_connect (G_OBJECT (bus), "message::buffering", (GCallback)buffering_cb, data);
   g_signal_connect (G_OBJECT (bus), "message::clock-lost", (GCallback)clock_lost_cb, data);
   gst_object_unref (bus);
@@ -328,7 +321,6 @@ void gst_native_set_uri (JNIEnv* env, jobject thiz, jstring uri) {
     gst_element_set_state (data->pipeline, GST_STATE_READY);
   g_object_set(data->pipeline, "uri", char_uri, NULL);
   (*env)->ReleaseStringUTFChars (env, uri, char_uri);
-  data->duration = GST_CLOCK_TIME_NONE;
   data->is_live |= (gst_element_set_state (data->pipeline, data->target_state) == GST_STATE_CHANGE_NO_PREROLL);
 }
 
