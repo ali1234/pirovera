@@ -403,7 +403,7 @@ static void gst_native_set_left (JNIEnv *env, jobject thiz, int n) {
     tmp = 0x8000;
     n = -n;
   }
-  tmp |= (n*3000);
+  tmp |= (n*500);
   control_set_left(tmp);
   __android_log_print(ANDROID_LOG_VERBOSE, "PiRover", "Left: %d", tmp);
 }
@@ -415,7 +415,7 @@ static void gst_native_set_right (JNIEnv *env, jobject thiz, int n) {
     tmp = 0x8000;
     n = -n;
   }
-  tmp |= (n*3000);
+  tmp |= (n*500);
   control_set_right(tmp);
   __android_log_print(ANDROID_LOG_VERBOSE, "PiRover", "Right: %d", tmp);
 
