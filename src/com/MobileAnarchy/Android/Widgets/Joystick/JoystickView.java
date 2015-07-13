@@ -134,10 +134,10 @@ public class JoystickView extends View {
 
         innerPadding = 10;
 
-        setMovementRange(10);
+        setMovementRange(32767);
         setMoveResolution(1.0f);
         setClickThreshold(0.4f);
-        setYAxisInverted(true);
+        setYAxisInverted(false);
         setUserCoordinateSystem(COORDINATE_CARTESIAN);
         setAutoReturnToCenter(true);
     }
