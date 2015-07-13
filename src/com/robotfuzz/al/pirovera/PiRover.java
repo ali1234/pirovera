@@ -28,7 +28,7 @@ import org.freedesktop.gstreamer.GStreamer;
 import com.MobileAnarchy.Android.Widgets.Joystick.JoystickView;
 import com.MobileAnarchy.Android.Widgets.Joystick.JoystickMovedListener;
 
-public class MainActivity extends Activity implements SurfaceHolder.Callback {
+public class PiRover extends Activity implements SurfaceHolder.Callback {
     private native void nativeInit();     // Initialize native code, build pipeline, etc
     private native void nativeFinalize(); // Destroy pipeline and shutdown native code
     private native void nativeSetUri(String uri); // Set the URI of the media to play
