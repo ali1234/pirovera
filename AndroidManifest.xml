@@ -17,7 +17,7 @@
         android:icon="@drawable/pirover"
         android:label="Pi Rover" >
         <activity
-            android:name=".PiRover"
+            android:name="PiRover"
             android:label="Pi Rover"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
             android:screenOrientation="landscape" >
