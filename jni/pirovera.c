@@ -285,8 +285,8 @@ static void *app_function (void *userdata) {
 static void gst_native_init (JNIEnv* env, jobject thiz) {
   CustomData *data = g_new0 (CustomData, 1);
   SET_CUSTOM_DATA (env, thiz, custom_data_field_id, data);
-  GST_DEBUG_CATEGORY_INIT (debug_category, "tutorial-5", 0, "Android tutorial 5");
-  gst_debug_set_threshold_for_name("tutorial-5", GST_LEVEL_DEBUG);
+  GST_DEBUG_CATEGORY_INIT (debug_category, "pirovera", 0, "Pi Rover");
+  gst_debug_set_threshold_for_name("pirovera", GST_LEVEL_DEBUG);
   GST_DEBUG ("Created CustomData at %p", data);
   data->app = (*env)->NewGlobalRef (env, thiz);
   GST_DEBUG ("Created GlobalRef for app object at %p", data->app);
@@ -350,7 +350,7 @@ static jboolean gst_native_class_init (JNIEnv* env, jclass klass) {
     /* We emit this message through the Android log instead of the GStreamer log because the later
      * has not been initialized yet.
      */
-    __android_log_print (ANDROID_LOG_ERROR, "tutorial-5", "The calling class does not implement all necessary interface methods");
+    __android_log_print (ANDROID_LOG_ERROR, "pirovera", "The calling class does not implement all necessary interface methods");
     return JNI_FALSE;
   }
   return JNI_TRUE;
@@ -455,7 +455,7 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
   java_vm = vm;
 
   if ((*vm)->GetEnv(vm, (void**) &env, JNI_VERSION_1_4) != JNI_OK) {
-    __android_log_print (ANDROID_LOG_ERROR, "tutorial-5", "Could not retrieve JNIEnv");
+    __android_log_print (ANDROID_LOG_ERROR, "pirovera", "Could not retrieve JNIEnv");
     return 0;
   }
   jclass klass = (*env)->FindClass (env, "com/robotfuzz/al/pirovera/PiRover");
