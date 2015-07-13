@@ -16,6 +16,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.ToggleButton;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
@@ -35,6 +36,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
     private native void nativePause();    // Set pipeline to PAUSED
     private native void nativeSetLeft(int n);  // Set left motor
     private native void nativeSetRight(int n); // Set right motor
+    private native void nativeSetHeadlights(boolean n);  // Set left motor
+    private native void nativeSetTaillights(boolean n);  // Set left motor
+    private native void nativeSetHazardlights(boolean n);  // Set left motor
     private static native boolean nativeClassInit(); // Initialize native class: cache Method IDs for callbacks
     private native void nativeSurfaceInit(Object surface); // A new surface is available
     private native void nativeSurfaceFinalize(); // Surface about to be destroyed
@@ -82,6 +86,17 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
 
     };
 
+    public void onHeadlightsClicked(View view) {
+        nativeSetHeadlights(((ToggleButton) view).isChecked());
+    }
+
+    public void onTaillightsClicked(View view) {
+        nativeSetTaillights(((ToggleButton) view).isChecked());
+    }
+
+    public void onHazardlightsClicked(View view) {
+        nativeSetHazardlights(((ToggleButton) view).isChecked());
+    }
 
     // Called when the activity is first created.
     @Override
