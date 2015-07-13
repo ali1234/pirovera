@@ -396,29 +396,39 @@ static void gst_native_surface_finalize (JNIEnv *env, jobject thiz) {
   data->initialized = FALSE;
 }
 
-static void gst_native_set_left (JNIEnv *env, jobject thiz, int n) {
+#define DZ (10000)
+
+static unsigned short motor_speed(int n) {
   unsigned short tmp = 0;
-  n = -n;
-  if (n < 0) {
+  if (n < -DZ) {
     tmp = 0x8000;
     n = -n;
   }
-  tmp |= (n*500);
-  control_set_left(tmp);
-  __android_log_print(ANDROID_LOG_VERBOSE, "PiRover", "Left: %d", tmp);
+  if (n < DZ) n = 0;
+  else n = (n - 8000) * 1.31;
+  n = n / 7;
+  tmp |= n;
+  return tmp;
+}
+
+static void gst_native_set_left (JNIEnv *env, jobject thiz, int n) {
+  control_set_left(motor_speed(n));
 }
 
 static void gst_native_set_right (JNIEnv *env, jobject thiz, int n) {
-  unsigned short tmp = 0;
-  n = -n;
-  if (n < 0) {
-    tmp = 0x8000;
-    n = -n;
-  }
-  tmp |= (n*500);
-  control_set_right(tmp);
-  __android_log_print(ANDROID_LOG_VERBOSE, "PiRover", "Right: %d", tmp);
+  control_set_right(motor_speed(n));
+}
 
+static void gst_native_set_headlights (JNIEnv *env, jobject thiz, uint8_t n) {
+  control_set_headlights(n);
+}
+
+static void gst_native_set_taillights (JNIEnv *env, jobject thiz, uint8_t n) {
+  control_set_taillights(n);
+}
+
+static void gst_native_set_hazardlights (JNIEnv *env, jobject thiz, uint8_t n) {
+  control_set_hazardlights(n);
 }
 
 /* List of implemented native methods */
@@ -432,6 +442,9 @@ static JNINativeMethod native_methods[] = {
   { "nativeSurfaceFinalize", "()V", (void *) gst_native_surface_finalize},
   { "nativeSetLeft", "(I)V", (void *) gst_native_set_left},
   { "nativeSetRight", "(I)V", (void *) gst_native_set_right},
+  { "nativeSetHeadlights", "(Z)V", (void *) gst_native_set_headlights},
+  { "nativeSetTaillights", "(Z)V", (void *) gst_native_set_taillights},
+  { "nativeSetHazardlights", "(Z)V", (void *) gst_native_set_hazardlights},
   { "nativeClassInit", "()Z", (void *) gst_native_class_init}
 };
 

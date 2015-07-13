@@ -11,48 +11,51 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true" />
-<!--
+
     <ToggleButton
         android:id="@+id/headlights"
         android:layout_width="96dp"
         android:layout_height="96dp"
-        android:layout_alignParentRight="true"
-        android:layout_above="@+id/taillights"
+        android:layout_alignParentBottom="true"
+        android:layout_toLeftOf="@+id/hazardlights"
         android:alpha="0.25"
+        android:onClick="onHeadlightsClicked"
         />
 
    <ToggleButton
         android:id="@+id/taillights"
         android:layout_width="96dp"
         android:layout_height="96dp"
-        android:layout_alignParentRight="true"
-        android:layout_above="@+id/hazardlights"
+        android:layout_alignParentBottom="true"
+        android:layout_toRightOf="@+id/hazardlights"
         android:alpha="0.25"
+        android:onClick="onTaillightsClicked"
         />
 
    <ToggleButton
         android:id="@+id/hazardlights"
         android:layout_width="96dp"
         android:layout_height="96dp"
-        android:layout_alignParentRight="true"
+        android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
         android:alpha="0.25"
+        android:onClick="onHazardlightsClicked"
         />
--->
+
     <com.MobileAnarchy.Android.Widgets.Joystick.JoystickView
         android:id="@+id/joystickleft"
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
         android:alpha="0.25" />
 
     <com.MobileAnarchy.Android.Widgets.Joystick.JoystickView
         android:id="@+id/joystickright"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
         android:alpha="0.25" />
 
 
