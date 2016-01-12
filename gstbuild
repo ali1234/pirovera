@@ -1,9 +1,9 @@
 #!/bin/sh
 
-export GSTREAMER_ROOT_ANDROID=/home/al/tools/android/gstreamer/1.7.1/
+export GSTREAMER_ROOT_ANDROID=/home/al/tools/android/gstreamer/1.6.2/
 export HOST_SED=/bin/sed
 
-#git clean -f -d -x
+git clean -f -d -x
 
 /home/al/Android/Sdk/tools/android update project -p . -s --target android-22 && \
 /home/al/tools/android/android-ndk/ndk-build && \
