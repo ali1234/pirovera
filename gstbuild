@@ -1,6 +1,6 @@
 #!/bin/sh
 
-export GSTREAMER_ROOT_ANDROID=/home/al/tools/android/gstreamer/1.7.1/
+export GSTREAMER_ROOT_ANDROID=/home/al/tools/android/gstreamer/1.7.2/
 export HOST_SED=/bin/sed
 
 git clean -f -d -x
