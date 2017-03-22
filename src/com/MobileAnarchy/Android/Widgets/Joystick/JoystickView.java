@@ -410,6 +410,19 @@ public class JoystickView extends View {
         return false;
     }
 
+    public void synthesizeMoveEvent(float x, float y) {
+        if ( pointerId == INVALID_POINTER_ID ) {
+            // Translate touch position to center of view
+            touchX = (x*cX)/2;
+            touchY = (y*cY)/2;
+
+//            Log.d(TAG, String.format("ACTION_MOVE: (%03.0f, %03.0f) => (%03.0f, %03.0f)", x, y, touchX, touchY));
+
+            reportOnMoved();
+            invalidate();
+        }
+    }
+
     private void reportOnMoved() {
         if ( movementConstraint == CONSTRAIN_CIRCLE )
             constrainCircle();

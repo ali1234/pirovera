@@ -14,6 +14,9 @@ import android.os.PowerManager;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.InputDevice;
+import android.view.MotionEvent;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ToggleButton;
@@ -43,6 +46,8 @@ public class PiRover extends Activity implements SurfaceHolder.Callback {
     private native void nativeSurfaceInit(Object surface); // A new surface is available
     private native void nativeSurfaceFinalize(); // Surface about to be destroyed
     private long native_custom_data;      // Native code will use this to keep private data
+    private JoystickView jvleft;
+    private JoystickView jvright;
 
     private final String mediaUri = "rtsp://172.24.1.1:8554/test";
 
@@ -98,6 +103,28 @@ public class PiRover extends Activity implements SurfaceHolder.Callback {
         nativeSetHazardlights(((ToggleButton) view).isChecked());
     }
 
+    public boolean dispatchGenericMotionEvent(MotionEvent ev) {
+        int source = ev.getSource();
+
+        if ((source & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK) {
+             jvleft.synthesizeMoveEvent(ev.getAxisValue(MotionEvent.AXIS_X), ev.getAxisValue(MotionEvent.AXIS_Y));
+            jvright.synthesizeMoveEvent(ev.getAxisValue(MotionEvent.AXIS_RX), ev.getAxisValue(MotionEvent.AXIS_RY));
+            return true;
+        }
+
+        return false;
+    }
+
+    public boolean dispatchKeyEvent(KeyEvent ev) {
+        int source = ev.getSource();
+
+        if ((source & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) {
+            return true;
+        }
+
+        return false;
+    }
+
     // Called when the activity is first created.
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -125,10 +152,10 @@ public class PiRover extends Activity implements SurfaceHolder.Callback {
 
         nativeInit();
 
-        JoystickView left  = (JoystickView)findViewById(R.id.joystickleft);
-        JoystickView right = (JoystickView)findViewById(R.id.joystickright);
-         left.setOnJoystickMovedListener(_listenerLeft);
-        right.setOnJoystickMovedListener(_listenerRight);
+        jvleft  = (JoystickView)findViewById(R.id.joystickleft);
+        jvright = (JoystickView)findViewById(R.id.joystickright);
+         jvleft.setOnJoystickMovedListener(_listenerLeft);
+        jvright.setOnJoystickMovedListener(_listenerRight);
     }
 
     protected void onSaveInstanceState (Bundle outState) {
