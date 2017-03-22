@@ -44,7 +44,7 @@ public class PiRover extends Activity implements SurfaceHolder.Callback {
     private native void nativeSurfaceFinalize(); // Surface about to be destroyed
     private long native_custom_data;      // Native code will use this to keep private data
 
-    private final String mediaUri = "rtsp://192.168.0.165:8554/test";
+    private final String mediaUri = "rtsp://172.24.1.1:8554/test";
 
     private PowerManager.WakeLock wake_lock;
 
